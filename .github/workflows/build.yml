@@ -18,7 +18,7 @@ jobs:
         uses: dabao1955/kernel_build_action@main
         with:
           # Device Hardware Target - Aligned to your 6.1.141-android14-11 source tier
-          kernel-url: https://android.googlesource.com
+          kernel-url: https://android.googlesource.com/kernel/manifest
           kernel-branch: android14-6.1
           config: gki_defconfig
           arch: arm64
