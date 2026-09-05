@@ -1,0 +1,26 @@
+# NetHunter Base Configuration for OnePlus Pad 2
+# USB HID Support for Wireless Attacks
+CONFIG_USB_CONFIGFS_F_HID=y
+CONFIG_USB_CONFIGFS=y
+
+# USB Networking
+CONFIG_USB_NET_CDCETHER=y
+CONFIG_USB_NET_CDC_EEM=y
+CONFIG_USB_NET_CDC_NCM=y
+
+# Wireless Core
+CONFIG_CFG80211=y
+CONFIG_MAC80211=y
+CONFIG_WIRELESS=y
+
+# Wireless Drivers (monitor mode support)
+CONFIG_NL80211_TESTMODE=y
+CONFIG_CFG80211_INTERNAL_REGDB=y
+
+# Packet Injection and Frame Injection Support
+CONFIG_NET_PACKET_SOCKETS=y
+CONFIG_PACKET=y
+
+# Monitor Mode Support
+CONFIG_WIRELESS_EXT=y
+CONFIG_WEXT_PRIV=y
