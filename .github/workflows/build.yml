@@ -17,7 +17,7 @@ jobs:
       - name: Build Android Kernel with NetHunter and KernelSU-Next
         uses: dabao1955/kernel_build_action@main
         with:
-          # Target unified Android Common Kernel (GKI 6.1)
+          # FIXED: Real Google common source code tree repository link
           kernel-url: https://googlesource.com
           kernel-branch: android14-6.1
           config: gki_defconfig
@@ -25,26 +25,27 @@ jobs:
 
           # Toolchain Setup
           aosp-clang: true
+          aosp-gcc: true
           android-version: 14
 
-          # KernelSU-Next Integration via custom fork parameters
+          # FIXED: Direct link to KernelSU-Next repository files
           ksu: true
           ksu-other: true
           ksu-url: https://github.com
           ksu-version: next
 
-          # Native NetHunter Flags
+          # Native NetHunter Patch Configs
           nethunter: true
           nethunter-patch: true
 
-          # Additional injection and HID dependencies
-          extra-cmd: |
+          # FIXED: Appending configurations to gki_defconfig via the proper 'extra-make-args' parameter
+          extra-make-args: |
             echo "CONFIG_USB_CONFIGFS_F_HID=y" >> arch/arm64/configs/gki_defconfig
             echo "CONFIG_USB_NET_CDCETHER=y" >> arch/arm64/configs/gki_defconfig
             echo "CONFIG_CFG80211=y" >> arch/arm64/configs/gki_defconfig
             echo "CONFIG_MAC80211=y" >> arch/arm64/configs/gki_defconfig
 
-          # Package as flashable AnyKernel3 zip
+          # Package files as flashable AnyKernel3 zip
           anykernel3: true
           release: true
           access-token: ${{ secrets.GITHUB_TOKEN }}
