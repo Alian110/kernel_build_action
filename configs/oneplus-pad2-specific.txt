@@ -1,0 +1,27 @@
+# OnePlus Pad 2 Specific Configurations
+# Device: OnePlus Pad 2
+# SoC: Qualcomm Snapdragon 8+ Gen 1
+# Android: 16+
+
+# Enable Debug Features
+CONFIG_DEBUG_FS=y
+CONFIG_DYNAMIC_DEBUG=y
+
+# File System Support
+CONFIG_EXFAT_FS=y
+CONFIG_NTFS_FS=y
+
+# Optimization
+CONFIG_LOCALVERSION=-NetHunter
+
+# Debugging Support
+CONFIG_HAVE_DEBUG_KMEMLEAK=y
+CONFIG_DEBUG_INFO=y
+
+# Performance Tuning
+CONFIG_CPU_FREQ=y
+CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y
+
+# Crypto Support
+CONFIG_CRYPTO_DEV_QCE=y
+CONFIG_CRYPTO_DEV_QCEDEV=y
