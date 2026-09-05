@@ -18,7 +18,7 @@ jobs:
         uses: dabao1955/kernel_build_action@main
         with:
           # Android 16 GKI 6.1 Kernel (OnePlus Pad 2 / Snapdragon 8 Gen 3)
-          kernel-url: https://googlesource.com/platform/kernel/common
+          kernel-url: https://android.googlesource.com/kernel/manifest
           kernel-branch: android16-6.1
           config: gki_defconfig
           arch: arm64
