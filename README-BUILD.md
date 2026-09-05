@@ -2,7 +2,7 @@
 
 ## Device Information
 - **Device**: OnePlus Pad 2
-- **SoC**: Qualcomm Snapdragon 8+ Gen 1
+- **SoC**:Qualcomm Snapdragon 8 Gen 3 (SM8650-AC)
 - **Target Android**: 16+
 - **Architecture**: ARM64
 - **Kernel**: GKI 6.1
