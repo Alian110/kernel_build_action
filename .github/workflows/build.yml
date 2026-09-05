@@ -24,7 +24,7 @@ jobs:
           arch: arm64
 
           # Toolchain Setup - VERIFIED: Disabled broken GCC, linked exact Clang build tag
-          aosp-clang: true
+          llvm: true
           aosp-gcc: false
           android-version: 14
           aosp-clang-version: r487747c
