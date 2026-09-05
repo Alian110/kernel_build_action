@@ -1,34 +1,50 @@
 name: Build OnePlus Pad 2 NetHunter Kernel
 
 on:
-  workflow_dispatch: # Enables the manual trigger button on your browser interface
+  workflow_dispatch:
 
 jobs:
-  kernel-compilation:
-    name: Execute GKI 6.1 Build
-    runs-on: ubuntu-latest
+  build:
+    name: Compile GKI 6.1 Kernel
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
     steps:
-      - name: Initialize Android Compiler Environment
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Android Kernel with NetHunter and KernelSU-Next
         uses: dabao1955/kernel_build_action@main
         with:
-          # Pulls the stable core unified kernel tree baseline from official Google sources
+          # Target unified Android Common Kernel (GKI 6.1)
           kernel-url: https://googlesource.com
-          kernel-branch: android6.1-qpr-release
+          kernel-branch: android14-6.1
           config: gki_defconfig
           arch: arm64
-          
-          # Forces the environment toolset to track Google's AOSP Android 16 compiler specifications
+
+          # Toolchain Setup
           aosp-clang: true
-          android-version: 16
-          
-          # Automatically integrates your preferred stealth injection hooks down into kernel-space natively
-          kernelsu-next: true
-          
-          # Injects mandatory Kali NetHunter platform dependencies directly into gki_defconfig configuration blocks
+          android-version: 14
+
+          # KernelSU-Next Integration via custom fork parameters
+          ksu: true
+          ksu-other: true
+          ksu-url: https://github.com
+          ksu-version: next
+
+          # Native NetHunter Flags
+          nethunter: true
+          nethunter-patch: true
+
+          # Additional injection and HID dependencies
           extra-cmd: |
             echo "CONFIG_USB_CONFIGFS_F_HID=y" >> arch/arm64/configs/gki_defconfig
             echo "CONFIG_USB_NET_CDCETHER=y" >> arch/arm64/configs/gki_defconfig
             echo "CONFIG_CFG80211=y" >> arch/arm64/configs/gki_defconfig
             echo "CONFIG_MAC80211=y" >> arch/arm64/configs/gki_defconfig
-            echo "CONFIG_NL80211_TESTMODE=y" >> arch/arm64/configs/gki_defconfig
-            
+
+          # Package as flashable AnyKernel3 zip
+          anykernel3: true
+          release: true
+          access-token: ${{ secrets.GITHUB_TOKEN }}
