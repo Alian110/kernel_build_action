@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Compile GKI 6.1 Kernel (Android 16 Over Android 14 Base)
+    name: Compile OnePlus Pad 2 Kernel (SM8650)
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -17,25 +17,25 @@ jobs:
       - name: Build Android Kernel with NetHunter and KernelSU-Next
         uses: dabao1955/kernel_build_action@main
         with:
-          # Device Hardware Target - Aligned to your 6.1.141-android14-11 source tier
-          kernel-url: https://android.googlesource.com/kernel/manifest
-          kernel-branch: android14-6.1
+          # Hardware Target - Fixed explicitly for OnePlus Open Source tree split
+          kernel-url: https://github.com
+          kernel-branch: main
           config: gki_defconfig
           arch: arm64
 
-          # Toolchain Setup - VERIFIED: Disabled broken GCC, linked exact Clang build tag
+          # Toolchain Setup
           llvm: true
           aosp-gcc: false
           android-version: 14
           aosp-clang-version: r487747c
           
-          # Enforce absolute reliance on LLVM binaries and tools
+          # Force compiler pipeline to use exclusive LLVM binary modules
           extra-cmd: LLVM=1 LLVM_IAS=1
 
           # KernelSU-Next Integration
           ksu: true
           ksu-other: true
-          ksu-url: https://github.com
+          ksu-url: https://github.com/bmax121/KernelSU
           ksu-version: next
 
           # NetHunter Support
