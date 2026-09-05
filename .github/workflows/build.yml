@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Compile GKI 6.1 Kernel (Android 16)
+    name: Compile GKI 6.1 Kernel (Android 16 Over Android 14 Base)
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -17,21 +17,25 @@ jobs:
       - name: Build Android Kernel with NetHunter and KernelSU-Next
         uses: dabao1955/kernel_build_action@main
         with:
-          # Android 16 GKI 6.1 Kernel (OnePlus Pad 2 / Snapdragon 8 Gen 3)
-          kernel-url: https://android.googlesource.com/kernel/manifest
-          kernel-branch: android16-6.1
+          # Device Hardware Target - Aligned to your 6.1.141-android14-11 source tier
+          kernel-url: https://googlesource.com
+          kernel-branch: android14-6.1
           config: gki_defconfig
           arch: arm64
 
-          # Toolchain Setup - BOTH REQUIRED
+          # Toolchain Setup - VERIFIED: Disabled broken GCC, linked exact Clang build tag
           aosp-clang: true
-          aosp-gcc: true
-          android-version: 13
+          aosp-gcc: false
+          android-version: 14
+          aosp-clang-version: r487747c
+          
+          # Enforce absolute reliance on LLVM binaries and tools
+          extra-cmd: LLVM=1 LLVM_IAS=1
 
           # KernelSU-Next Integration
           ksu: true
           ksu-other: true
-          ksu-url: https://github.com/bmax121/KernelSU
+          ksu-url: https://github.com
           ksu-version: next
 
           # NetHunter Support
@@ -51,3 +55,4 @@ jobs:
           anykernel3: true
           release: true
           access-token: ${{ secrets.GITHUB_TOKEN }}
+          
