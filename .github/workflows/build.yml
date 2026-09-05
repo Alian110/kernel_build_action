@@ -26,7 +26,7 @@ jobs:
           # Toolchain Setup - BOTH REQUIRED
           aosp-clang: true
           aosp-gcc: true
-          android-version: 16
+          android-version: 13
 
           # KernelSU-Next Integration
           ksu: true
