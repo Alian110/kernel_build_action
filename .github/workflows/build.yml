@@ -1,11 +1,11 @@
-name: Build OnePlus Pad 2 NetHunter Kernel
+name: Build OnePlus Pad 2 NetHunter Kernel (Snapdragon 8 Gen 3)
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: Compile GKI 6.1 Kernel
+    name: Compile GKI 6.1 Kernel (Android 16)
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -17,35 +17,37 @@ jobs:
       - name: Build Android Kernel with NetHunter and KernelSU-Next
         uses: dabao1955/kernel_build_action@main
         with:
-          # FIXED: Real Google common source code tree repository link
-          kernel-url: https://googlesource.com
-          kernel-branch: android14-6.1
+          # Android 16 GKI 6.1 Kernel (OnePlus Pad 2 / Snapdragon 8 Gen 3)
+          kernel-url: https://googlesource.com/platform/kernel/common
+          kernel-branch: android16-6.1
           config: gki_defconfig
           arch: arm64
 
-          # Toolchain Setup
+          # Toolchain Setup - BOTH REQUIRED
           aosp-clang: true
           aosp-gcc: true
-          android-version: 14
+          android-version: 16
 
-          # FIXED: Direct link to KernelSU-Next repository files
+          # KernelSU-Next Integration
           ksu: true
           ksu-other: true
-          ksu-url: https://github.com
+          ksu-url: https://github.com/bmax121/KernelSU
           ksu-version: next
 
-          # Native NetHunter Patch Configs
+          # NetHunter Support
           nethunter: true
           nethunter-patch: true
 
-          # FIXED: Appending configurations to gki_defconfig via the proper 'extra-make-args' parameter
-          extra-make-args: |
-            echo "CONFIG_USB_CONFIGFS_F_HID=y" >> arch/arm64/configs/gki_defconfig
-            echo "CONFIG_USB_NET_CDCETHER=y" >> arch/arm64/configs/gki_defconfig
-            echo "CONFIG_CFG80211=y" >> arch/arm64/configs/gki_defconfig
-            echo "CONFIG_MAC80211=y" >> arch/arm64/configs/gki_defconfig
+          # Merge custom kernel configs for NetHunter + device optimization
+          merge-configs: |
+            [
+              "configs/nethunter-base.txt",
+              "configs/nethunter-network.txt",
+              "configs/snapdragon8-gen3-optimize.txt",
+              "configs/security-hardening.txt"
+            ]
 
-          # Package files as flashable AnyKernel3 zip
+          # Package as flashable AnyKernel3 zip
           anykernel3: true
           release: true
           access-token: ${{ secrets.GITHUB_TOKEN }}
