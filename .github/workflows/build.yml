@@ -1,30 +1,34 @@
-# A simple action usage
-name: Build Kernel
+name: Build OnePlus Pad 2 NetHunter Kernel
+
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Enables the manual trigger button on your browser interface
 
 jobs:
-  Build-Kernel:
-    strategy:
-      fail-fast: false
+  kernel-compilation:
+    name: Execute GKI 6.1 Build
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
-      - name: Build Kernel
+      - name: Initialize Android Compiler Environment
         uses: dabao1955/kernel_build_action@main
         with:
-          kernel-url: https://github.com/AcmeUI-Devices/android_kernel_xiaomi_cas
-          kernel-dir: msm-4.19
-          kernel-branch: taffy
-          config: cas_defconfig
+          # Pulls the stable core unified kernel tree baseline from official Google sources
+          kernel-url: https://googlesource.com
+          kernel-branch: android6.1-qpr-release
+          config: gki_defconfig
           arch: arm64
-          aosp-gcc: true
+          
+          # Forces the environment toolset to track Google's AOSP Android 16 compiler specifications
           aosp-clang: true
-          ksu: true
-          ksu-version: main
-          android-version: 12
-          aosp-clang-version: r383902
-          disable-lto: true
-          anykernel3: true
+          android-version: 16
+          
+          # Automatically integrates your preferred stealth injection hooks down into kernel-space natively
+          kernelsu-next: true
+          
+          # Injects mandatory Kali NetHunter platform dependencies directly into gki_defconfig configuration blocks
+          extra-cmd: |
+            echo "CONFIG_USB_CONFIGFS_F_HID=y" >> arch/arm64/configs/gki_defconfig
+            echo "CONFIG_USB_NET_CDCETHER=y" >> arch/arm64/configs/gki_defconfig
+            echo "CONFIG_CFG80211=y" >> arch/arm64/configs/gki_defconfig
+            echo "CONFIG_MAC80211=y" >> arch/arm64/configs/gki_defconfig
+            echo "CONFIG_NL80211_TESTMODE=y" >> arch/arm64/configs/gki_defconfig
+            
