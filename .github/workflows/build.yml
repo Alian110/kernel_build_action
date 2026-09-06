@@ -18,8 +18,8 @@ jobs:
         uses: dabao1955/kernel_build_action@main
         with:
           # Hardware Target - Fixed explicitly for OnePlus Open Source tree split
-          kernel-url: https://github.com/OnePlusOSS/
-          kernel-branch: android_kernel_oneplus_sm8650
+          kernel-url: https://github.com/OnePlusOSS/android_kernel_oneplus_sm8650
+          kernel-branch: oneplus/sm8650_v_15.0.0_pad2
           config: gki_defconfig
           arch: arm64
 
@@ -55,4 +55,3 @@ jobs:
           anykernel3: true
           release: true
           access-token: ${{ secrets.GITHUB_TOKEN }}
-          
