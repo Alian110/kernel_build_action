@@ -29,28 +29,33 @@ jobs:
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
           chmod a+rx ~/.bin/repo
           echo "$HOME/.bin" >> $GITHUB_PATH
-
-      - name: Initialize and Sync OnePlus Kernel Manifest (Local Override)
+          
+      - name: Initialize and Sync OnePlus Kernel Manifest (Pure Local Setup)
         run: |
-          echo "Setting up multi-repository workspace..."
-          mkdir workspace
-          cd workspace
+          echo "Setting up workspace using your local custom manifest..."
           
           # Dummy identities required by git to prevent crashing
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           
-          # 1. Initialize the official structure first
-          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8650
+          # 1. Create a local Git repository to host our custom manifest
+          mkdir local_manifest_repo
+          cd local_manifest_repo
+          git init
+          # Copy your txt file and rename it directly to what the tool expects
+          cp ../configs/oneplus_pad2_v.txt default.xml
+          git add default.xml
+          git commit -m "Custom OnePlus Pad 2 Manifest"
+          cd ..
           
-          # 2. Copy your custom .txt manifest from the configs folder and rename it to .xml for the tool
-          cp ../configs/oneplus_pad2_v.txt .repo/manifests/custom_pad2_v.xml
+          # 2. Set up the workspace and point the repo tool directly at our local folder
+          mkdir workspace
+          cd workspace
+          repo init -u ../local_manifest_repo
           
-          # 3. Re-initialize repo to explicitly use your local custom manifest
-          repo init -m custom_pad2_v.xml
-          
-          # 4. Sync the source code (depth settings are now handled by your txt file!)
+          # 3. Sync the source code using the optimized depth settings from your file
           repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle
+
 
       - name: Patch KernelSU-Next
         run: |
