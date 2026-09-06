@@ -55,13 +55,14 @@ jobs:
           
           # 3. Sync the source code using the optimized depth settings from your file
           repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle
-
-
+          
       - name: Patch KernelSU-Next
         run: |
           echo "Injecting KernelSU-Next..."
           cd workspace/kernel_platform/common
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/main/kernel/setup.sh" | bash -s main
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+
+
 
       - name: Inject Custom NetHunter Configurations
         run: |
