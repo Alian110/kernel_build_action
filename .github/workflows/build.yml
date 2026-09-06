@@ -75,9 +75,10 @@ jobs:
 
       - name: Build Kernel with Bazel
         run: |
-          echo "Starting Bazel compilation for Snapdragon 8 Gen 3 (Pineapple)..."
+          echo "Starting Bazel compilation for Snapdragon 8 Gen 3 (Pineapple GKI)..."
           cd workspace
-          ./kernel_platform/build_with_bazel.py -t pineapple
+          ./kernel_platform/build_with_bazel.py -t pineapple gki
+
 
       - name: Upload Kernel Artifacts
         uses: actions/upload-artifact@v4
