@@ -63,11 +63,23 @@ jobs:
 
       - name: Inject Custom NetHunter Configurations Safely
         run: |
-          echo "Fixing GKI module requirements and injecting configs..."
-          cd workspace/kernel_platform/common
+          echo "Installing Google's Buildozer tool to edit Bazel configuration files..."
+          wget https://github.com/bazelbuild/buildtools/releases/latest/download/buildozer-linux-amd64
+          chmod +x buildozer-linux-amd64
+          sudo mv buildozer-linux-amd64 /usr/bin/buildozer
           
-          # 1. CRITICAL MODULE FIX: Force required features into loadable modules (=m) 
-          # so Bazel can successfully package the expected .ko files at the end of the build.
+          echo "Fixing GKI module requirements and injecting configs..."
+          
+          # Navigate to the Bazel workspace root
+          cd workspace/kernel_platform
+          
+          # CRITICAL FIX: Add all newly generated NetHunter kernel modules to Bazel's expected outputs list
+          buildozer 'add module_outs drivers/net/wireless/mediatek/mt76/mt76x02-usb.ko drivers/misc/eeprom/eeprom_93cx6.ko drivers/net/usb/rndis_host.ko drivers/net/wireless/mediatek/mt7601u/mt7601u.ko drivers/net/wireless/realtek/rtl818x/rtl8187/rtl8187.ko drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0u.ko drivers/bluetooth/btintel.ko drivers/net/wireless/mediatek/mt76/mt76.ko drivers/net/wireless/rndis_wlan.ko drivers/bluetooth/btusb.ko drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0-common.ko drivers/bluetooth/btrtl.ko net/wireless/cfg80211.ko net/mac80211/mac80211.ko drivers/net/wireless/mediatek/mt76/mt76-usb.ko drivers/net/wireless/mediatek/mt76/mt76x02-lib.ko' //common:kernel_aarch64
+          
+          # Navigate to the common kernel directory for config injection
+          cd common
+          
+          # Force required networking features into loadable modules (=m) 
           sed -i 's/CONFIG_VLAN_8021Q=y/CONFIG_VLAN_8021Q=m/g' ${{ github.workspace }}/configs/nethunter-network.txt
           sed -i 's/CONFIG_USB_USBNET=y/CONFIG_USB_USBNET=m/g' ${{ github.workspace }}/configs/nethunter-network.txt
           sed -i 's/CONFIG_USB_NET_CDC_EEM=y/CONFIG_USB_NET_CDC_EEM=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
@@ -77,13 +89,13 @@ jobs:
           sed -i 's/CONFIG_CFG80211=y/CONFIG_CFG80211=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
           sed -i 's/CONFIG_MAC80211=y/CONFIG_MAC80211=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
           
-          # 2. Append custom configs directly to the master GKI configuration
+          # Append custom configs directly to the master GKI configuration
           cat ${{ github.workspace }}/configs/nethunter-base.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/nethunter-network.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/snapdragon8-gen3-optimize.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/security-hardening.txt >> arch/arm64/configs/gki_defconfig
           
-          # 3. CRITICAL FIX: Disable Google's strict GKI defconfig check
+          # Disable Google's strict GKI defconfig check
           echo "Hunting down and disabling POST_DEFCONFIG_CMDS checks..."
           find . -type f -name "build.config*" -exec sed -i 's/POST_DEFCONFIG_CMDS="check_defconfig"/POST_DEFCONFIG_CMDS=""/g' {} +
 
