@@ -35,8 +35,8 @@ jobs:
           # KernelSU-Next Integration
           ksu: true
           ksu-other: true
-          ksu-url: https://github.com/bmax121/KernelSU
-          ksu-version: next
+          ksu-url: https://github.com/KernelSU-Next/KernelSU-Next
+          ksu-version: main
 
           # NetHunter Support
           nethunter: true
