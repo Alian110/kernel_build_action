@@ -22,9 +22,9 @@ jobs:
 
       - name: Install Build Dependencies and Repo Tool
         run: |
-          echo "Installing essential build tools, cross-compilers, and Google Repo..."
+          echo "Installing essential build tools and Google Repo..."
           sudo apt-get update
-          sudo apt-get install -y git-core gnupg flex bison build-essential crossbuild-essential-arm64 zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig
+          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig
           
           mkdir -p ~/.bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
@@ -66,19 +66,13 @@ jobs:
           echo "Merging NetHunter configs and disabling GKI defconfig checks..."
           cd workspace/kernel_platform/common
           
-          # 1. Combine your custom text files into a single master fragment
-          cat ${{ github.workspace }}/configs/nethunter-base.txt ${{ github.workspace }}/configs/nethunter-network.txt ${{ github.workspace }}/configs/snapdragon8-gen3-optimize.txt ${{ github.workspace }}/configs/security-hardening.txt > nethunter.config
+          # 1. Append custom configs directly to the master GKI configuration
+          cat ${{ github.workspace }}/configs/nethunter-base.txt >> arch/arm64/configs/gki_defconfig
+          cat ${{ github.workspace }}/configs/nethunter-network.txt >> arch/arm64/configs/gki_defconfig
+          cat ${{ github.workspace }}/configs/snapdragon8-gen3-optimize.txt >> arch/arm64/configs/gki_defconfig
+          cat ${{ github.workspace }}/configs/security-hardening.txt >> arch/arm64/configs/gki_defconfig
           
-          # 2. Use the kernel's built-in tool to cleanly merge the fragment and avoid symbol warnings
-          ARCH=arm64 scripts/kconfig/merge_config.sh arch/arm64/configs/gki_defconfig nethunter.config
-          
-          # 3. Generate a minimized defconfig
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- savedefconfig
-          
-          # 4. Overwrite the original GKI config with our clean, merged version
-          cp defconfig arch/arm64/configs/gki_defconfig
-          
-          # 5. CRITICAL FIX: Disable Google's strict GKI defconfig check to prevent the savedefconfig mismatch error
+          # 2. CRITICAL FIX: Disable Google's strict GKI defconfig check to prevent the savedefconfig mismatch error
           echo "Hunting down and disabling POST_DEFCONFIG_CMDS checks..."
           find . -type f -name "build.config*" -exec sed -i 's/POST_DEFCONFIG_CMDS="check_defconfig"/POST_DEFCONFIG_CMDS=""/g' {} +
 
