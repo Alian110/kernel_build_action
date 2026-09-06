@@ -1,4 +1,4 @@
-name: Build OnePlus Pad 2 NetHunter Kernel (Snapdragon 8 Gen 3)
+name: Build OnePlus Pad 2 NetHunter Kernel (Bazel)
 
 on:
   workflow_dispatch:
@@ -14,54 +14,68 @@ jobs:
       - name: Checkout Repository (Loads your custom configs)
         uses: actions/checkout@v4
 
-      - name: Clone OnePlus Kernel Source
+      - name: Free Disk Space (Required for massive Bazel builds)
         run: |
-          echo "Cloning OnePlus Pad 2 kernel branch..."
-          git clone --depth=1 -b oneplus/sm8650_v_15.0.0_pad2 https://github.com/OnePlusOSS/android_kernel_oneplus_sm8650 kernel_source
-          
-      - name: Copy Custom Configs into Kernel Source
-        run: |
-          echo "Copying custom NetHunter configs to the kernel source directory..."
-          cp -r configs kernel_source/
+          echo "Clearing up disk space for the massive build environment..."
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo apt-get clean
 
-      - name: Build Android Kernel with NetHunter and KernelSU-Next
-        uses: dabao1955/kernel_build_action@main
+      - name: Install Build Dependencies and Repo Tool
+        run: |
+          echo "Installing essential build tools and Google Repo..."
+          sudo apt-get update
+          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig
+          mkdir -p ~/.bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
+          chmod a+rx ~/.bin/repo
+          echo "$HOME/.bin" >> $GITHUB_PATH
+
+      - name: Initialize and Sync OnePlus Kernel Manifest (Local Override)
+        run: |
+          echo "Setting up multi-repository workspace..."
+          mkdir workspace
+          cd workspace
+          
+          # Dummy identities required by git to prevent crashing
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          
+          # 1. Initialize the official structure first
+          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8650
+          
+          # 2. Copy your custom .txt manifest from the configs folder and rename it to .xml for the tool
+          cp ../configs/oneplus_pad2_v.txt .repo/manifests/custom_pad2_v.xml
+          
+          # 3. Re-initialize repo to explicitly use your local custom manifest
+          repo init -m custom_pad2_v.xml
+          
+          # 4. Sync the source code (depth settings are now handled by your txt file!)
+          repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle
+
+      - name: Patch KernelSU-Next
+        run: |
+          echo "Injecting KernelSU-Next..."
+          cd workspace/kernel_platform/common
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/main/kernel/setup.sh" | bash -s main
+
+      - name: Inject Custom NetHunter Configurations
+        run: |
+          echo "Appending custom NetHunter tools to the master GKI configuration..."
+          cd workspace
+          cat ../configs/nethunter-base.txt >> kernel_platform/common/arch/arm64/configs/gki_defconfig
+          cat ../configs/nethunter-network.txt >> kernel_platform/common/arch/arm64/configs/gki_defconfig
+          cat ../configs/snapdragon8-gen3-optimize.txt >> kernel_platform/common/arch/arm64/configs/gki_defconfig
+          cat ../configs/security-hardening.txt >> kernel_platform/common/arch/arm64/configs/gki_defconfig
+
+      - name: Build Kernel with Bazel
+        run: |
+          echo "Starting Bazel compilation for Snapdragon 8 Gen 3 (Pineapple)..."
+          cd workspace
+          ./kernel_platform/build_with_bazel.py -t pineapple
+
+      - name: Upload Kernel Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          # Hardware Target - Pointing to the locally cloned directory
-          kernel-url: ./kernel_source/
-          config: gki_defconfig
-          arch: arm64
-
-          # Toolchain Setup
-          llvm: true
-          aosp-gcc: false
-          android-version: 14
-          aosp-clang-version: r487747c
-          
-          # Force compiler pipeline to use exclusive LLVM binary modules
-          extra-cmd: LLVM=1 LLVM_IAS=1
-
-          # KernelSU-Next Integration
-          ksu: true
-          ksu-other: true
-          ksu-url: https://github.com/KernelSU-Next/KernelSU-Next
-          ksu-version: main
-
-          # NetHunter Support
-          nethunter: true
-          nethunter-patch: false
-
-          # Merge custom kernel configs (now safely inside the kernel folder)
-          merge-configs: |
-            [
-              "configs/nethunter-base.txt",
-              "configs/nethunter-network.txt",
-              "configs/snapdragon8-gen3-optimize.txt",
-              "configs/security-hardening.txt"
-            ]
-
-          # Package as flashable AnyKernel3 zip
-          anykernel3: true
-          release: true
-          access-token: ${{ secrets.GITHUB_TOKEN }}
+          name: OnePlus-Pad-2-Kernel-Output
+          path: workspace/out/
           
