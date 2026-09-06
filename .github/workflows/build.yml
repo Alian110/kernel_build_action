@@ -63,16 +63,27 @@ jobs:
 
       - name: Inject Custom NetHunter Configurations Safely
         run: |
-          echo "Merging NetHunter configs and disabling GKI defconfig checks..."
+          echo "Fixing GKI module requirements and injecting configs..."
           cd workspace/kernel_platform/common
           
-          # 1. Append custom configs directly to the master GKI configuration
+          # 1. CRITICAL MODULE FIX: Force required features into loadable modules (=m) 
+          # so Bazel can successfully package the expected .ko files at the end of the build.
+          sed -i 's/CONFIG_VLAN_8021Q=y/CONFIG_VLAN_8021Q=m/g' ${{ github.workspace }}/configs/nethunter-network.txt
+          sed -i 's/CONFIG_USB_USBNET=y/CONFIG_USB_USBNET=m/g' ${{ github.workspace }}/configs/nethunter-network.txt
+          sed -i 's/CONFIG_USB_NET_CDC_EEM=y/CONFIG_USB_NET_CDC_EEM=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
+          sed -i 's/CONFIG_BT=y/CONFIG_BT=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
+          sed -i 's/CONFIG_BT_RFCOMM=y/CONFIG_BT_RFCOMM=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
+          sed -i 's/CONFIG_BT_HCIUART=y/CONFIG_BT_HCIUART=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
+          sed -i 's/CONFIG_CFG80211=y/CONFIG_CFG80211=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
+          sed -i 's/CONFIG_MAC80211=y/CONFIG_MAC80211=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
+          
+          # 2. Append custom configs directly to the master GKI configuration
           cat ${{ github.workspace }}/configs/nethunter-base.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/nethunter-network.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/snapdragon8-gen3-optimize.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/security-hardening.txt >> arch/arm64/configs/gki_defconfig
           
-          # 2. CRITICAL FIX: Disable Google's strict GKI defconfig check to prevent the savedefconfig mismatch error
+          # 3. CRITICAL FIX: Disable Google's strict GKI defconfig check
           echo "Hunting down and disabling POST_DEFCONFIG_CMDS checks..."
           find . -type f -name "build.config*" -exec sed -i 's/POST_DEFCONFIG_CMDS="check_defconfig"/POST_DEFCONFIG_CMDS=""/g' {} +
 
