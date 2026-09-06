@@ -42,13 +42,13 @@ jobs:
           nethunter: true
           nethunter-patch: false
 
-          # Merge custom kernel configs for NetHunter + device optimization
+          # Merge custom kernel configs with ABSOLUTE paths
           merge-configs: |
             [
-              "configs/nethunter-base.txt",
-              "configs/nethunter-network.txt",
-              "configs/snapdragon8-gen3-optimize.txt",
-              "configs/security-hardening.txt"
+              "${{ github.workspace }}/configs/nethunter-base.txt",
+              "${{ github.workspace }}/configs/nethunter-network.txt",
+              "${{ github.workspace }}/configs/snapdragon8-gen3-optimize.txt",
+              "${{ github.workspace }}/configs/security-hardening.txt"
             ]
 
           # Package as flashable AnyKernel3 zip
