@@ -11,15 +11,24 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Repository (Loads your custom configs)
         uses: actions/checkout@v4
+
+      - name: Clone OnePlus Kernel Source
+        run: |
+          echo "Cloning OnePlus Pad 2 kernel branch..."
+          git clone --depth=1 -b oneplus/sm8650_v_15.0.0_pad2 https://github.com/OnePlusOSS/android_kernel_oneplus_sm8650 kernel_source
+          
+      - name: Copy Custom Configs into Kernel Source
+        run: |
+          echo "Copying custom NetHunter configs to the kernel source directory..."
+          cp -r configs kernel_source/
 
       - name: Build Android Kernel with NetHunter and KernelSU-Next
         uses: dabao1955/kernel_build_action@main
         with:
-          # Hardware Target - Fixed explicitly for OnePlus Open Source tree split
-          kernel-url: https://github.com/OnePlusOSS/android_kernel_oneplus_sm8650
-          kernel-branch: oneplus/sm8650_v_15.0.0_pad2
+          # Hardware Target - Pointing to the locally cloned directory
+          kernel-url: ./kernel_source/
           config: gki_defconfig
           arch: arm64
 
@@ -42,16 +51,17 @@ jobs:
           nethunter: true
           nethunter-patch: false
 
-          # Merge custom kernel configs with ABSOLUTE paths
+          # Merge custom kernel configs (now safely inside the kernel folder)
           merge-configs: |
             [
-              "${{ github.workspace }}/configs/nethunter-base.txt",
-              "${{ github.workspace }}/configs/nethunter-network.txt",
-              "${{ github.workspace }}/configs/snapdragon8-gen3-optimize.txt",
-              "${{ github.workspace }}/configs/security-hardening.txt"
+              "configs/nethunter-base.txt",
+              "configs/nethunter-network.txt",
+              "configs/snapdragon8-gen3-optimize.txt",
+              "configs/security-hardening.txt"
             ]
 
           # Package as flashable AnyKernel3 zip
           anykernel3: true
           release: true
           access-token: ${{ secrets.GITHUB_TOKEN }}
+          
