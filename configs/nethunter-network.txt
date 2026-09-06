@@ -27,3 +27,6 @@ CONFIG_UDP_TUNNEL=y
 # TCP/IP Stack
 CONFIG_IP_NF_NAT=y
 CONFIG_NF_NAT=y
+
+# General USB Network Support (Required for advanced bridging)
+CONFIG_USB_USBNET=y
