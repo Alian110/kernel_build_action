@@ -63,23 +63,60 @@ jobs:
 
       - name: Inject Custom NetHunter Configurations Safely
         run: |
-          echo "Injecting configs and resolving GKI module expectations..."
+          echo "Injecting configs and resolving Bazel module manifests..."
           cd workspace/kernel_platform/common
           
-          # 1. CRITICAL MODULE FIX: Force ONLY the modules Google explicitly expects back to loadable modules (=m).
-          # Everything else remains built-in (=y), generating zero extra .ko files, avoiding Bazel strict packaging crashes.
-          sed -i 's/CONFIG_VLAN_8021Q=y/CONFIG_VLAN_8021Q=m/g' ${{ github.workspace }}/configs/nethunter-network.txt
-          sed -i 's/CONFIG_BT_RFCOMM=y/CONFIG_BT_RFCOMM=m/g' ${{ github.workspace }}/configs/nethunter-base.txt
-          
-          # 2. Append custom configs directly to the master GKI configuration
+          # 1. Append custom configs directly to the master GKI configuration
           cat ${{ github.workspace }}/configs/nethunter-base.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/nethunter-network.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/snapdragon8-gen3-optimize.txt >> arch/arm64/configs/gki_defconfig
           cat ${{ github.workspace }}/configs/security-hardening.txt >> arch/arm64/configs/gki_defconfig
           
-          # 3. Disable Google's strict GKI defconfig check
+          # 2. Disable Google's strict GKI defconfig check
           echo "Hunting down and disabling POST_DEFCONFIG_CMDS checks..."
           find . -type f -name "build.config*" -exec sed -i 's/POST_DEFCONFIG_CMDS="check_defconfig"/POST_DEFCONFIG_CMDS=""/g' {} +
+          
+          cd ..
+          
+          # 3. CRITICAL FIX: Python script to dynamically patch BUILD.bazel with the exactly missing .ko files
+          python3 -c '
+          import re
+          filepath = "common/BUILD.bazel"
+          with open(filepath, "r") as f:
+              content = f.read()
+
+          mods = [
+              "drivers/bluetooth/btrtl.ko",
+              "net/wireless/cfg80211.ko",
+              "drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0u.ko",
+              "drivers/net/wireless/mediatek/mt76/mt76-usb.ko",
+              "net/mac80211/mac80211.ko",
+              "drivers/bluetooth/btusb.ko",
+              "drivers/net/wireless/realtek/rtl818x/rtl8187/rtl8187.ko",
+              "drivers/net/wireless/mediatek/mt76/mt76.ko",
+              "drivers/net/wireless/mediatek/mt7601u/mt7601u.ko",
+              "drivers/bluetooth/btintel.ko",
+              "drivers/net/wireless/rndis_wlan.ko",
+              "drivers/net/usb/rndis_host.ko",
+              "drivers/net/wireless/mediatek/mt76/mt76x02-usb.ko",
+              "drivers/net/wireless/mediatek/mt76/mt76x02-lib.ko",
+              "drivers/misc/eeprom/eeprom_93cx6.ko",
+              "drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0-common.ko"
+          ]
+          
+          insert_str = "".join(["        \"" + m + "\",\n" for m in mods])
+          
+          # Safely inject the modules directly into the Bazel module_outs manifest array
+          pattern1 = r"(module_outs\s*=\s*(?:[a-zA-Z0-9_]+\(.*?\)\s*\+\s*)?\[)"
+          if re.search(pattern1, content):
+              content = re.sub(pattern1, r"\1\n" + insert_str, content, count=1)
+          else:
+              pattern2 = r"(module_outs\s*=\s*[a-zA-Z0-9_]+\(.*?\)),"
+              content = re.sub(pattern2, r"\1 + [\n" + insert_str + "    ],", content, count=1)
+
+          with open(filepath, "w") as f:
+              f.write(content)
+          '
 
       - name: Build Kernel with Bazel
         run: |
