@@ -40,7 +40,7 @@ jobs:
 
           # NetHunter Support
           nethunter: true
-          nethunter-patch: true
+          nethunter-patch: false
 
           # Merge custom kernel configs for NetHunter + device optimization
           merge-configs: |
