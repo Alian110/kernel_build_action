@@ -35,7 +35,7 @@ jobs:
           sudo ln -sf ~/.bin/repo /usr/bin/repo
           sudo ln -sf ~/.bin/repo /bin/repo
 
-      - name: Initialize and Sync OnePlus Kernel Manifest (Pure Local Setup)
+      - name: Initialize and Sync OnePlus Kernel Manifest
         run: |
           echo "Setting up workspace using your local custom manifest..."
           
@@ -78,8 +78,8 @@ jobs:
           
           cd ${{ github.workspace }}
           
-          # 3. Call the external script to install and run Buildozer
-          echo "Calling external Buildozer script..."
+          # 3. Call the external script to formally install and execute Buildozer
+          echo "Executing external Buildozer script..."
           chmod +x configs/apply_buildozer.sh
           ./configs/apply_buildozer.sh
 
