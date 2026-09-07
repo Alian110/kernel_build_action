@@ -61,9 +61,9 @@ jobs:
           cd workspace/kernel_platform/common
           curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
 
-      - name: Inject Custom NetHunter Configurations Safely
+      - name: Inject Configurations and Run Buildozer
         run: |
-          echo "Injecting configs and resolving Bazel module manifests..."
+          echo "Injecting configs..."
           cd workspace/kernel_platform/common
           
           # 1. Append custom configs directly to the master GKI configuration
@@ -76,13 +76,12 @@ jobs:
           echo "Hunting down and disabling POST_DEFCONFIG_CMDS checks..."
           find . -type f -name "build.config*" -exec sed -i 's/POST_DEFCONFIG_CMDS="check_defconfig"/POST_DEFCONFIG_CMDS=""/g' {} +
           
-          cd ..
+          cd ${{ github.workspace }}
           
-          # 3. CRITICAL FIX: Tell Bazel to stop looking for 8021q and rfcomm as separate .ko files.
-          # Since NetHunter compiles them as built-in (=y), they are inside the kernel now, not separate files.
-          echo "Stripping built-in modules from Bazel's expected output list..."
-          find . -type f \( -name "BUILD.bazel" -o -name "*.bzl" -o -name "build.config*" \) -exec sed -i '/8021q\.ko/d' {} +
-          find . -type f \( -name "BUILD.bazel" -o -name "*.bzl" -o -name "build.config*" \) -exec sed -i '/rfcomm\.ko/d' {} +
+          # 3. Call the external script to install and run Buildozer
+          echo "Calling external Buildozer script..."
+          chmod +x configs/apply_buildozer.sh
+          ./configs/apply_buildozer.sh
 
       - name: Build Kernel with Bazel
         run: |
