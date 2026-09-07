@@ -78,45 +78,11 @@ jobs:
           
           cd ..
           
-          # 3. CRITICAL FIX: Python script to dynamically patch BUILD.bazel with the exactly missing .ko files
-          python3 -c '
-          import re
-          filepath = "common/BUILD.bazel"
-          with open(filepath, "r") as f:
-              content = f.read()
-
-          mods = [
-              "drivers/bluetooth/btrtl.ko",
-              "net/wireless/cfg80211.ko",
-              "drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0u.ko",
-              "drivers/net/wireless/mediatek/mt76/mt76-usb.ko",
-              "net/mac80211/mac80211.ko",
-              "drivers/bluetooth/btusb.ko",
-              "drivers/net/wireless/realtek/rtl818x/rtl8187/rtl8187.ko",
-              "drivers/net/wireless/mediatek/mt76/mt76.ko",
-              "drivers/net/wireless/mediatek/mt7601u/mt7601u.ko",
-              "drivers/bluetooth/btintel.ko",
-              "drivers/net/wireless/rndis_wlan.ko",
-              "drivers/net/usb/rndis_host.ko",
-              "drivers/net/wireless/mediatek/mt76/mt76x02-usb.ko",
-              "drivers/net/wireless/mediatek/mt76/mt76x02-lib.ko",
-              "drivers/misc/eeprom/eeprom_93cx6.ko",
-              "drivers/net/wireless/mediatek/mt76/mt76x0/mt76x0-common.ko"
-          ]
-          
-          insert_str = "".join(["        \"" + m + "\",\n" for m in mods])
-          
-          # Safely inject the modules directly into the Bazel module_outs manifest array
-          pattern1 = r"(module_outs\s*=\s*(?:[a-zA-Z0-9_]+\(.*?\)\s*\+\s*)?\[)"
-          if re.search(pattern1, content):
-              content = re.sub(pattern1, r"\1\n" + insert_str, content, count=1)
-          else:
-              pattern2 = r"(module_outs\s*=\s*[a-zA-Z0-9_]+\(.*?\)),"
-              content = re.sub(pattern2, r"\1 + [\n" + insert_str + "    ],", content, count=1)
-
-          with open(filepath, "w") as f:
-              f.write(content)
-          '
+          # 3. CRITICAL FIX: Tell Bazel to stop looking for 8021q and rfcomm as separate .ko files.
+          # Since NetHunter compiles them as built-in (=y), they are inside the kernel now, not separate files.
+          echo "Stripping built-in modules from Bazel's expected output list..."
+          find . -type f \( -name "BUILD.bazel" -o -name "*.bzl" -o -name "build.config*" \) -exec sed -i '/8021q\.ko/d' {} +
+          find . -type f \( -name "BUILD.bazel" -o -name "*.bzl" -o -name "build.config*" \) -exec sed -i '/rfcomm\.ko/d' {} +
 
       - name: Build Kernel with Bazel
         run: |
